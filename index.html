@@ -494,14 +494,26 @@
                     <div style="font-size: 0.85rem; color: #94a3b8; line-height: 1.8;">
                         <div style="margin-bottom: 6px;">• <strong style="color: #22d3ee;">영역 1</strong> (x &lt; 0):
                             $\psi_1 = Ae^{ikx} + Be^{-ikx}$ &nbsp; (A: 입사파, B: 반사파)</div>
+
                         <div style="margin-bottom: 6px;">• <strong style="color: #f59e0b;">영역 2</strong> (0 ≤ x ≤ L):
-                            $\psi_2 = Ce^{\kappa x} + De^{-\kappa x}$ &nbsp; (장벽 내부 감쇠파)</div>
+                            <div style="margin-left: 20px; margin-top: 4px;">
+                                <span style="color: #ef4444;">E &lt; V₀</span>: $\psi_2 = Ce^{\kappa x} + De^{-\kappa
+                                x}$ &nbsp; (지수 감쇠, 터널링)<br>
+                                <span style="color: #4ade80;">E &gt; V₀</span>: $\psi_2 = Ce^{ik'x} + De^{-ik'x}$ &nbsp;
+                                (진동, 전파)
+                            </div>
+                            <div style="margin-left: 20px; font-size: 0.75rem; color: #64748b;">
+                                $\kappa = \sqrt{V_0-E}$, &nbsp; $k' = \sqrt{E-V_0}$
+                            </div>
+                        </div>
+
                         <div style="margin-bottom: 10px;">• <strong style="color: #4ade80;">영역 3</strong> (x &gt; L):
                             $\psi_3 = Fe^{ikx}$ &nbsp; (F: 투과파)</div>
                         <div
                             style="padding-top: 8px; border-top: 1px solid rgba(148, 163, 184, 0.2); font-size: 0.8rem;">
-                            ※ 계산 시 <strong style="color: #38bdf8;">A = 1</strong>로 정규화하여, 투과율 = |F|², 반사율 = |B|²로 간단히
-                            계산됩니다.
+                            ※ 계산 시 <strong style="color: #38bdf8;">A = 1</strong>로 정규화. &nbsp;
+                            <span style="color: #ef4444;">E &lt; V₀</span>: 터널링 발생 |
+                            <span style="color: #4ade80;">E &gt; V₀</span>: 장벽 위 전파 (반사 가능)
                         </div>
                     </div>
                 </div>
@@ -520,7 +532,7 @@
                 </div>
 
                 <div class="formula-box region2">
-                    <div class="formula-label">영역 2: 0 ≤ x ≤ L (장벽 내부)</div>
+                    <div class="formula-label">영역 2: 0 ≤ x ≤ L &nbsp; <span style="color: #ef4444; font-size: 0.7rem;"></span>(E&lt;V₀: 감쇠)</span> <span style="color: #4ade80; font-size: 0.7rem;">(E&gt;V₀: 진동)</span></div>
                     <div class="formula-content" id="psi2-formula">$$\psi_2(x) = C e^{\kappa x} + D e^{-\kappa x}$$
                     </div>
                 </div>
