@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Tunneling Simulation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <!-- MathJax for LaTeX rendering -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            },
+            startup: {
+                ready: () => {
+                    MathJax.startup.defaultReady();
+                    window.mathJaxReady = true;
+                }
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #e2e8f0;
+            --accent-color: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --success-color: #4ade80;
+            --danger-color: #f43f5e;
+            --slider-track: #334155;
+            --purple: #a855f7;
+            --cyan: #06b6d4;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        h1 {
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            font-size: 2.2rem;
+            text-align: center;
+        }
+
+        h1 .title-text {
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h1 .title-emoji {
+            -webkit-text-fill-color: initial;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 620px;
+            gap: 20px;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 1800px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .canvas-container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .zoom-controls {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            display: flex;
+            gap: 6px;
+            z-index: 10;
+        }
+
+        .zoom-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 6px;
+            background: rgba(56, 189, 248, 0.2);
+            color: var(--accent-color);
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .zoom-btn:hover {
+            background: rgba(56, 189, 248, 0.4);
+            transform: scale(1.1);
+        }
+
+        .zoom-btn:active {
+            transform: scale(0.95);
+        }
+
+        .zoom-level {
+            background: rgba(0, 0, 0, 0.4);
+            color: #94a3b8;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        canvas {
+            width: 100%;
+            height: 600px;
+            background-color: #0f172a;
+            border-radius: 8px;
+            cursor: crosshair;
+        }
+
+        .controls {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        label {
+            font-weight: 500;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .value-display {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: var(--slider-track);
+            border-radius: 3px;
+            outline: none;
+            transition: background 0.3s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            background: var(--accent-hover);
+        }
+
+        .info-panel {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            text-align: center;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        /* Right Panel - Formulas */
+        .right-panel {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            max-height: calc(100vh - 100px);
+        }
+
+        .formula-section {
+            margin-bottom: 24px;
+        }
+
+        .formula-section h3 {
+            font-size: 1rem;
+            color: var(--accent-color);
+            margin: 0 0 12px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .formula-section h3::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+            border-radius: 2px;
+        }
+
+        .formula-box {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            border-left: 3px solid var(--accent-color);
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        .formula-box.region1 {
+            border-left-color: #22d3ee;
+        }
+
+        .formula-box.region2 {
+            border-left-color: #f59e0b;
+        }
+
+        .formula-box.region3 {
+            border-left-color: #4ade80;
+        }
+
+        .formula-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .stats-panel {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-item span {
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+
+        .stat-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stat-value.transmission {
+            color: var(--success-color);
+        }
+
+        .stat-value.reflection {
+            color: var(--danger-color);
+        }
+
+        /* MathJax styling */
+        mjx-container {
+            color: var(--text-color) !important;
+            max-width: 100% !important;
+            overflow-x: auto !important;
+        }
+
+        mjx-container[display="true"] {
+            display: block !important;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 4px 0;
+        }
+
+        .formula-content {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--text-color);
+            min-height: 30px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+        }
+
+        .formula-content::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .formula-content::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+
+        .formula-content::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 3px;
+        }
+
+        .formula-box::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .formula-box::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+
+        .formula-box::-webkit-scrollbar-thumb {
+            background: var(--slider-track);
+            border-radius: 3px;
+        }
+
+        .coeff-highlight {
+            color: var(--success-color);
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1><span class="title-emoji"></span>⚛️</span> <span class="title-text">양자 터널링 시뮬레이션</span></h1>
+
+    <div class="main-layout">
+        <!-- Left Panel: Canvas and Controls -->
+        <div class="left-panel">
+            <div class="canvas-container">
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="color-dot" style="background: rgba(255, 165, 0, 0.3); border: 1px solid orange;">
+                        </div>
+                        퍼텐셜 장벽 (V₀)
+                    </div>
+                    <div class="legend-item">
+                        <div class="color-dot" style="background: cyan;"></div>Re[ψ(x)] 실수부
+                    </div>
+                    <div class="legend-item">
+                        <div class="color-dot" style="background: #a855f7;"></div>|ψ(x)|² 확률밀도
+                    </div>
+                    <div class="legend-item">
+                        <div class="color-dot" style="background: #ef4444;"></div>입자 에너지 (E)
+                    </div>
+                </div>
+                <div class="canvas-wrapper">
+                    <canvas id="simCanvas"></canvas>
+                    <div class="zoom-controls">
+                        <button class="zoom-btn" id="zoomOut" title="축소">−</button>
+                        <span class="zoom-level" id="zoomLevel">100%</span>
+                        <button class="zoom-btn" id="zoomIn" title="확대">+</button>
+                    </div>
+                </div>
+                <div class="info-panel">
+                    영역 1 (x &lt; 0): 입사파 + 반사파 &nbsp;|&nbsp; 영역 2 (0 ≤ x ≤ L): 장벽 내부
+                    &nbsp;|&nbsp; 영역 3 (x &gt; L): 투과파
+                </div>
+            </div>
+
+            <div class="controls">
+                <!-- 입자 에너지 E -->
+                <div class="control-group">
+                    <div class="label-row">
+                        <label for="sliderE">입자 에너지 (E)</label>
+                        <span id="valE" class="value-display">2.00</span>
+                    </div>
+                    <input type="range" id="sliderE" min="0.1" max="10.0" step="0.1" value="2.0">
+                </div>
+
+                <!-- 퍼텐셜 높이 V0 -->
+                <div class="control-group">
+                    <div class="label-row">
+                        <label for="sliderV0">장벽 퍼텐셜 (V₀)</label>
+                        <span id="valV0" class="value-display">7.00</span>
+                    </div>
+                    <input type="range" id="sliderV0" min="0.1" max="15.0" step="0.1" value="7.0">
+                </div>
+
+                <!-- 장벽 너비 L -->
+                <div class="control-group">
+                    <div class="label-row">
+                        <label for="sliderL">장벽 너비 (L)</label>
+                        <span id="valL" class="value-display">1.00</span>
+                    </div>
+                    <input type="range" id="sliderL" min="0.1" max="5.0" step="0.1" value="1.0">
+                </div>
+
+                <!-- 통계 패널 -->
+                <div class="stats-panel" style="grid-column: 1 / -1;">
+                    <div class="stat-item">
+                        <span>투과율 (|T|²)</span>
+                        <div id="statT" class="stat-value transmission">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <span>반사율 (|B|²)</span>
+                        <div id="statR" class="stat-value reflection">--</div>
+                    </div>
+                </div>
+
+                <!-- 투과율/반사율 설명 -->
+                <div
+                    style="grid-column: 1 / -1; background: rgba(0,0,0,0.2); padding: 12px 16px; border-radius: 10px; font-size: 0.8rem; color: #94a3b8; text-align: center;">
+                    <strong style="color: #4ade80;">투과율</strong> $ = \frac{|T|^2}{|A|^2}$ (투과파 진폭² / 입사파 진폭²)
+                    &nbsp;&nbsp;|&nbsp;&nbsp;
+                    <strong style="color: #f43f5e;">반사율</strong> $ = \frac{|B|^2}{|A|^2}$ (반사파 진폭² / 입사파 진폭²)
+                    &nbsp;&nbsp;|&nbsp;&nbsp;
+                    <span>투과율 + 반사율 = 1 (확률 보존)</span>
+                </div>
+
+                <!-- 파동함수 정의 설명 -->
+                <div
+                    style="grid-column: 1 / -1; background: rgba(0,0,0,0.3); padding: 16px; border-radius: 12px; border: 1px solid rgba(56, 189, 248, 0.2);">
+                    <div style="font-size: 0.9rem; color: #38bdf8; font-weight: 600; margin-bottom: 10px;">📐 파동함수 정의
+                    </div>
+                    <div style="font-size: 0.85rem; color: #94a3b8; line-height: 1.8;">
+                        <div style="margin-bottom: 6px;">• <strong style="color: #22d3ee;">영역 1</strong> (x &lt; 0):
+                            $\psi_1 = Ae^{ikx} + Be^{-ikx}$ &nbsp; (A: 입사파, B: 반사파)</div>
+                        <div style="margin-bottom: 6px;">• <strong style="color: #f59e0b;">영역 2</strong> (0 ≤ x ≤ L):
+                            $\psi_2 = Ce^{\kappa x} + De^{-\kappa x}$ &nbsp; (장벽 내부 감쇠파)</div>
+                        <div style="margin-bottom: 10px;">• <strong style="color: #4ade80;">영역 3</strong> (x &gt; L):
+                            $\psi_3 = Te^{ikx}$ &nbsp; (T: 투과파)</div>
+                        <div
+                            style="padding-top: 8px; border-top: 1px solid rgba(148, 163, 184, 0.2); font-size: 0.8rem;">
+                            ※ 계산 시 <strong style="color: #38bdf8;">A = 1</strong>로 정규화하여, 투과율 = |T|², 반사율 = |B|²로 간단히
+                            계산됩니다.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Formulas with embedded coefficients -->
+        <div class="right-panel">
+            <!-- 파동함수 정의 -->
+            <div class="formula-section">
+                <h3>파동함수 ψ(x)</h3>
+
+                <div class="formula-box region1">
+                    <div class="formula-label">영역 1: x &lt; 0 (입사 + 반사)</div>
+                    <div class="formula-content" id="psi1-formula">$$\psi_1(x) = A e^{ikx} + B e^{-ikx}$$</div>
+                </div>
+
+                <div class="formula-box region2">
+                    <div class="formula-label">영역 2: 0 ≤ x ≤ L (장벽 내부)</div>
+                    <div class="formula-content" id="psi2-formula">$$\psi_2(x) = C e^{\kappa x} + D e^{-\kappa x}$$
+                    </div>
+                </div>
+
+                <div class="formula-box region3">
+                    <div class="formula-label">영역 3: x &gt; L (투과)</div>
+                    <div class="formula-content" id="psi3-formula">$$\psi_3(x) = T e^{ikx}$$</div>
+                </div>
+            </div>
+
+            <!-- 실수부 -->
+            <div class="formula-section">
+                <h3>실수부: Re[ψ(x)]</h3>
+
+                <div class="formula-box region1">
+                    <div class="formula-label">영역 1: Re[ψ₁]</div>
+                    <div class="formula-content" id="re-psi1-formula">Loading...</div>
+                </div>
+
+                <div class="formula-box region2">
+                    <div class="formula-label">영역 2: Re[ψ₂]</div>
+                    <div class="formula-content" id="re-psi2-formula">Loading...</div>
+                </div>
+
+                <div class="formula-box region3">
+                    <div class="formula-label">영역 3: Re[ψ₃]</div>
+                    <div class="formula-content" id="re-psi3-formula">Loading...</div>
+                </div>
+            </div>
+
+            <!-- 확률밀도 -->
+            <div class="formula-section">
+                <h3>확률밀도: |ψ(x)|²</h3>
+
+                <div class="formula-box region1">
+                    <div class="formula-label">영역 1: |ψ₁|²</div>
+                    <div class="formula-content" id="prob-psi1-formula">Loading...</div>
+                </div>
+
+                <div class="formula-box region2">
+                    <div class="formula-label">영역 2: |ψ₂|²</div>
+                    <div class="formula-content" id="prob-psi2-formula">Loading...</div>
+                </div>
+
+                <div class="formula-box region3">
+                    <div class="formula-label">영역 3: |ψ₃|²</div>
+                    <div class="formula-content" id="prob-psi3-formula">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Setup Canvas
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+
+        // State parameters
+        let params = {
+            E: 2.0,
+            V0: 7.0,
+            L: 1.0
+        };
+
+        // Zoom level (1 = 100%, 2 = 200%, etc.)
+        let zoomLevel = 1.0;
+
+        // References to UI
+        const sliderE = document.getElementById('sliderE');
+        const sliderV0 = document.getElementById('sliderV0');
+        const sliderL = document.getElementById('sliderL');
+        const valE = document.getElementById('valE');
+        const valV0 = document.getElementById('valV0');
+        const valL = document.getElementById('valL');
+
+        function resize() {
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            width = canvas.width;
+            height = canvas.height;
+            ctx.scale(dpr, dpr);
+            width = rect.width;
+            height = rect.height;
+            draw();
+        }
+
+        window.addEventListener('resize', resize);
+
+        // Input Listeners
+        sliderE.addEventListener('input', (e) => {
+            params.E = parseFloat(e.target.value);
+            valE.textContent = params.E.toFixed(2);
+            draw();
+        });
+        sliderV0.addEventListener('input', (e) => {
+            params.V0 = parseFloat(e.target.value);
+            valV0.textContent = params.V0.toFixed(2);
+            draw();
+        });
+        sliderL.addEventListener('input', (e) => {
+            params.L = parseFloat(e.target.value);
+            valL.textContent = params.L.toFixed(2);
+            draw();
+        });
+
+        // Zoom button listeners
+        document.getElementById('zoomIn').addEventListener('click', () => {
+            if (zoomLevel < 4.0) {
+                zoomLevel = Math.min(4.0, zoomLevel + 0.25);
+                document.getElementById('zoomLevel').textContent = Math.round(zoomLevel * 100) + '%';
+                draw();
+            }
+        });
+
+        document.getElementById('zoomOut').addEventListener('click', () => {
+            if (zoomLevel > 0.5) {
+                zoomLevel = Math.max(0.5, zoomLevel - 0.25);
+                document.getElementById('zoomLevel').textContent = Math.round(zoomLevel * 100) + '%';
+                draw();
+            }
+        });
+
+        // --- Helper functions for formatting ---
+
+        function formatComplexLatex(c, precision = 3) {
+            if (!c || typeof c === 'number') {
+                return c ? c.toFixed(precision) : '0';
+            }
+            const re = c.re !== undefined ? c.re : 0;
+            const im = c.im !== undefined ? c.im : 0;
+
+            const reStr = re.toFixed(precision);
+            const imAbs = Math.abs(im).toFixed(precision);
+            const sign = im >= 0 ? '+' : '-';
+
+            return `(${reStr} ${sign} ${imAbs}i)`;
+        }
+
+        function formatRealLatex(val, precision = 3) {
+            return val.toFixed(precision);
+        }
+
+        // --- Physics Logic ---
+
+        function solveCoefficients(E, V0, L) {
+            const k = math.sqrt(E);
+            const kappa = math.sqrt(math.complex(V0 - E, 0));
+
+            const A = math.complex(1, 0);
+
+            const e_ka = math.exp(math.multiply(kappa, L));
+            const e_mka = math.exp(math.multiply(kappa, -1 * L));
+            const e_ika = math.exp(math.multiply(math.complex(0, 1), math.multiply(k, L)));
+
+            const i = math.complex(0, 1);
+            const minus_ik = math.multiply(math.multiply(i, -1), k);
+
+            const M = [
+                [1, -1, -1, 0],
+                [minus_ik, math.multiply(kappa, -1), kappa, 0],
+                [0, e_ka, e_mka, math.multiply(e_ika, -1)],
+                [0, math.multiply(kappa, e_ka), math.multiply(kappa.neg(), e_mka), math.multiply(minus_ik, e_ika)]
+            ];
+
+            const Y = [
+                math.multiply(A, -1),
+                math.multiply(minus_ik, A),
+                0,
+                0
+            ];
+
+            let solution;
+            try {
+                const res = math.lusolve(M, Y);
+                solution = res.map(row => row[0]);
+            } catch (err) {
+                console.error("Solver error:", err);
+                return null;
+            }
+
+            return {
+                A: A,
+                B: solution[0],
+                C: solution[1],
+                D: solution[2],
+                T: solution[3],
+                k: k,
+                kappa: kappa
+            };
+        }
+
+        function getPsi(x, coeffs, L) {
+            const { A, B, C, D, T, k, kappa } = coeffs;
+
+            if (x < 0) {
+                const term1 = math.multiply(A, math.exp(math.multiply(math.complex(0, 1), math.multiply(k, x))));
+                const term2 = math.multiply(B, math.exp(math.multiply(math.complex(0, -1), math.multiply(k, x))));
+                return math.add(term1, term2);
+            } else if (x <= L) {
+                const term1 = math.multiply(C, math.exp(math.multiply(kappa, x)));
+                const term2 = math.multiply(D, math.exp(math.multiply(kappa, -x)));
+                return math.add(term1, term2);
+            } else {
+                return math.multiply(T, math.exp(math.multiply(math.complex(0, 1), math.multiply(k, x))));
+            }
+        }
+
+        // --- Update Formulas with MathJax ---
+
+        function updateFormulas(coeffs) {
+            if (!coeffs || !window.mathJaxReady) return;
+
+            const { A, B, C, D, T, k, kappa } = coeffs;
+
+            // Format coefficients for LaTeX
+            const Astr = formatComplexLatex(A);
+            const Bstr = formatComplexLatex(B);
+            const Cstr = formatComplexLatex(C);
+            const Dstr = formatComplexLatex(D);
+            const Tstr = formatComplexLatex(T);
+
+            // k and kappa values
+            const kVal = typeof k === 'number' ? k.toFixed(3) : k.re.toFixed(3);
+            const kappaStr = kappa.im !== undefined && Math.abs(kappa.im) > 0.001
+                ? `${kappa.im.toFixed(3)}i`
+                : (kappa.re !== undefined ? kappa.re.toFixed(3) : kappa.toFixed(3));
+
+            // ============ Wave Functions ψ(x) ============
+            document.getElementById('psi1-formula').innerHTML =
+                `$$\\psi_1(x) = ${Astr}\\, e^{i\\sqrt{E}\\,x} + ${Bstr}\\, e^{-i\\sqrt{E}\\,x}$$`;
+
+            document.getElementById('psi2-formula').innerHTML =
+                `$$\\psi_2(x) = ${Cstr}\\, e^{\\sqrt{V_0-E}\\,x} + ${Dstr}\\, e^{-\\sqrt{V_0-E}\\,x}$$`;
+
+            document.getElementById('psi3-formula').innerHTML =
+                `$$\\psi_3(x) = ${Tstr}\\, e^{i\\sqrt{E}\\,x}$$`;
+
+            // ============ Real Parts Re[ψ] ============
+            // For A = Ar + iAi, B = Br + iBi:
+            // Re[Ae^{ikx} + Be^{-ikx}] = (Ar+Br)cos(kx) + (Ai-Bi)sin(kx)
+            const Ar = A.re, Ai = A.im;
+            const Br = B.re !== undefined ? B.re : 0;
+            const Bi = B.im !== undefined ? B.im : 0;
+            const Cr = C.re !== undefined ? C.re : 0;
+            const Ci = C.im !== undefined ? C.im : 0;
+            const Dr = D.re !== undefined ? D.re : 0;
+            const Di = D.im !== undefined ? D.im : 0;
+            const Tr = T.re !== undefined ? T.re : 0;
+            const Ti = T.im !== undefined ? T.im : 0;
+
+            const cosCoeff1 = (Ar + Br).toFixed(3);
+            const sinCoeff1 = (Ai - Bi).toFixed(3);
+
+            document.getElementById('re-psi1-formula').innerHTML =
+                `$$\\text{Re}[\\psi_1] = ${cosCoeff1}\\cos(\\sqrt{E}\\,x) + ${sinCoeff1}\\sin(\\sqrt{E}\\,x)$$`;
+
+            // Region 2: when kappa is real, Re[Ce^{κx} + De^{-κx}] = Cr*e^{κx} + Dr*e^{-κx}
+            // when kappa is imaginary (E > V0), it becomes oscillatory
+            if (Math.abs(kappa.im) < 0.001) {
+                // kappa is real (tunneling)
+                document.getElementById('re-psi2-formula').innerHTML =
+                    `$$\\text{Re}[\\psi_2] = ${Cr.toFixed(3)}\\,e^{\\sqrt{V_0-E}\\,x} + ${Dr.toFixed(3)}\\,e^{-\\sqrt{V_0-E}\\,x}$$`;
+            } else {
+                // kappa is imaginary (E > V0, propagating)
+                const kappa_im = Math.abs(kappa.im);
+                const cosCoeff2 = (Cr + Dr).toFixed(3);
+                const sinCoeff2 = (Ci - Di).toFixed(3);
+                document.getElementById('re-psi2-formula').innerHTML =
+                    `$$\\text{Re}[\\psi_2] = ${cosCoeff2}\\cos(\\sqrt{E-V_0}\\,x) + ${sinCoeff2}\\sin(\\sqrt{E-V_0}\\,x)$$`;
+            }
+
+            document.getElementById('re-psi3-formula').innerHTML =
+                `$$\\text{Re}[\\psi_3] = ${Tr.toFixed(3)}\\cos(\\sqrt{E}\\,x) - ${Ti.toFixed(3)}\\sin(\\sqrt{E}\\,x)$$`;
+
+            // ============ Probability Density |ψ|² ============
+            const absA2 = math.abs(A) ** 2;
+            const absB2 = math.abs(B) ** 2;
+            const absC2 = math.abs(C) ** 2;
+            const absD2 = math.abs(D) ** 2;
+            const absT2 = math.abs(T) ** 2;
+
+            // |ψ1|² = |A|² + |B|² + 2Re[A*B*e^{-2ikx}]
+            // A*B* = (Ar + iAi)(Br - iBi) = (ArBr + AiBi) + i(AiBr - ArBi)
+            const AconjB_re = Ar * Br + Ai * Bi;
+            const AconjB_im = Ai * Br - Ar * Bi;
+
+            document.getElementById('prob-psi1-formula').innerHTML =
+                `$$|\\psi_1|^2 = ${absA2.toFixed(3)} + ${absB2.toFixed(3)} + 2(${AconjB_re.toFixed(3)}\\cos(2\\sqrt{E}\\,x) + ${AconjB_im.toFixed(3)}\\sin(2\\sqrt{E}\\,x))$$`;
+
+            // |ψ2|² 
+            const CconjD_re = Cr * Dr + Ci * Di;
+            if (Math.abs(kappa.im) < 0.001) {
+                // kappa real
+                document.getElementById('prob-psi2-formula').innerHTML =
+                    `$$|\\psi_2|^2 = ${absC2.toFixed(3)}\\,e^{2\\sqrt{V_0-E}\\,x} + ${absD2.toFixed(3)}\\,e^{-2\\sqrt{V_0-E}\\,x} + ${(2 * CconjD_re).toFixed(3)}$$`;
+            } else {
+                // kappa imaginary (E > V0)
+                const CconjD_im = Ci * Dr - Cr * Di;
+                document.getElementById('prob-psi2-formula').innerHTML =
+                    `$$|\\psi_2|^2 = ${absC2.toFixed(3)} + ${absD2.toFixed(3)} + 2(${CconjD_re.toFixed(3)}\\cos(2\\sqrt{E-V_0}\\,x) + ${CconjD_im.toFixed(3)}\\sin(2\\sqrt{E-V_0}\\,x))$$`;
+            }
+
+            document.getElementById('prob-psi3-formula').innerHTML =
+                `$$|\\psi_3|^2 = ${absT2.toFixed(3)}$$`;
+
+            // Re-render MathJax
+            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                MathJax.typesetPromise([document.querySelector('.right-panel')]).catch(err => console.log('MathJax error:', err));
+            }
+        }
+
+        function draw() {
+            if (!width || !height) return;
+
+            ctx.clearRect(0, 0, width, height);
+
+            const { E, V0, L } = params;
+            const coeffs = solveCoefficients(E, V0, L);
+
+            if (!coeffs) return;
+
+            // Update formulas display
+            updateFormulas(coeffs);
+
+            // Apply zoom to ranges
+            const baseXRange = 9; // from -3 to 6 = 9 units
+            const zoomedXRange = baseXRange / zoomLevel;
+            const xCenter = (L / 2); // center around barrier
+            const xMin = xCenter - zoomedXRange / 2 - 1.5;
+            const xMax = xCenter + zoomedXRange / 2 + 1.5;
+            const yRange = 3.0 / zoomLevel;
+
+            const mapX = (x) => (x - xMin) / (xMax - xMin) * width;
+            // x축을 아래에서 1/3 지점에 위치 (위에서 2/3 지점)
+            const axisY = height * (2 / 3);
+            const mapY = (y) => axisY - (y / yRange) * axisY;
+
+            // Draw barrier background
+            const bX = mapX(0);
+            const bW = mapX(L) - bX;
+            ctx.fillStyle = 'rgba(255, 165, 0, 0.15)';
+            ctx.fillRect(bX, 0, bW, height);
+
+            const scalePot = 0.2;
+
+            // Draw V0 profile
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(255, 165, 0, 0.6)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.moveTo(mapX(xMin), mapY(0));
+            ctx.lineTo(mapX(0), mapY(0));
+            ctx.lineTo(mapX(0), mapY(V0 * scalePot));
+            ctx.lineTo(mapX(L), mapY(V0 * scalePot));
+            ctx.lineTo(mapX(L), mapY(0));
+            ctx.lineTo(mapX(xMax), mapY(0));
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Draw E line
+            ctx.beginPath();
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 2;
+            ctx.moveTo(mapX(xMin), mapY(E * scalePot));
+            ctx.lineTo(mapX(xMax), mapY(E * scalePot));
+            ctx.stroke();
+
+            // Draw axis
+            ctx.beginPath();
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 1;
+            ctx.moveTo(0, mapY(0));
+            ctx.lineTo(width, mapY(0));
+            ctx.stroke();
+
+            // Calculate points
+            const points = [];
+            const numPoints = 800;
+            for (let i = 0; i <= numPoints; i++) {
+                const x = xMin + (xMax - xMin) * (i / numPoints);
+                const val = getPsi(x, coeffs, L);
+                points.push({ x, val });
+            }
+
+            // Draw |psi|^2
+            ctx.beginPath();
+            ctx.strokeStyle = '#a855f7';
+            ctx.lineWidth = 3;
+            for (let i = 0; i < points.length; i++) {
+                const p = points[i];
+                const prob = math.abs(p.val) ** 2;
+                const px = mapX(p.x);
+                const py = mapY(prob);
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+
+            // Draw Re[psi]
+            ctx.beginPath();
+            ctx.strokeStyle = '#06b6d4';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < points.length; i++) {
+                const p = points[i];
+                const re = p.val.re;
+                const px = mapX(p.x);
+                const py = mapY(re);
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+
+            // Labels
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '12px Inter';
+            ctx.fillText("x=0", mapX(0) + 5, height - 10);
+            ctx.fillText(`x=${L.toFixed(1)}`, mapX(L) + 5, height - 10);
+
+            // Update Stats
+            const T_prob = math.abs(coeffs.T) ** 2;
+            const R_prob = math.abs(coeffs.B) ** 2;
+
+            document.getElementById('statT').textContent = (T_prob * 100).toFixed(2) + "%";
+            document.getElementById('statR').textContent = (R_prob * 100).toFixed(2) + "%";
+        }
+
+        // Initialize
+        const checkLoaded = setInterval(() => {
+            if (typeof math !== 'undefined' && window.mathJaxReady) {
+                clearInterval(checkLoaded);
+                resize();
+            }
+        }, 100);
+
+    </script>
+</body>
+
+</html>
