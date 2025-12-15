@@ -467,11 +467,11 @@
                 <!-- 통계 패널 -->
                 <div class="stats-panel" style="grid-column: 1 / -1;">
                     <div class="stat-item">
-                        <span>투과율 (|T|²)</span>
+                        <span>투과율</span>
                         <div id="statT" class="stat-value transmission">--</div>
                     </div>
                     <div class="stat-item">
-                        <span>반사율 (|B|²)</span>
+                        <span>반사율</span>
                         <div id="statR" class="stat-value reflection">--</div>
                     </div>
                 </div>
@@ -479,7 +479,7 @@
                 <!-- 투과율/반사율 설명 -->
                 <div
                     style="grid-column: 1 / -1; background: rgba(0,0,0,0.2); padding: 12px 16px; border-radius: 10px; font-size: 0.8rem; color: #94a3b8; text-align: center;">
-                    <strong style="color: #4ade80;">투과율</strong> $ = \frac{|T|^2}{|A|^2}$ (투과파 진폭² / 입사파 진폭²)
+                    <strong style="color: #4ade80;">투과율</strong> $ = \frac{|F|^2}{|A|^2}$ (투과파 진폭² / 입사파 진폭²)
                     &nbsp;&nbsp;|&nbsp;&nbsp;
                     <strong style="color: #f43f5e;">반사율</strong> $ = \frac{|B|^2}{|A|^2}$ (반사파 진폭² / 입사파 진폭²)
                     &nbsp;&nbsp;|&nbsp;&nbsp;
@@ -497,10 +497,10 @@
                         <div style="margin-bottom: 6px;">• <strong style="color: #f59e0b;">영역 2</strong> (0 ≤ x ≤ L):
                             $\psi_2 = Ce^{\kappa x} + De^{-\kappa x}$ &nbsp; (장벽 내부 감쇠파)</div>
                         <div style="margin-bottom: 10px;">• <strong style="color: #4ade80;">영역 3</strong> (x &gt; L):
-                            $\psi_3 = Te^{ikx}$ &nbsp; (T: 투과파)</div>
+                            $\psi_3 = Fe^{ikx}$ &nbsp; (F: 투과파)</div>
                         <div
                             style="padding-top: 8px; border-top: 1px solid rgba(148, 163, 184, 0.2); font-size: 0.8rem;">
-                            ※ 계산 시 <strong style="color: #38bdf8;">A = 1</strong>로 정규화하여, 투과율 = |T|², 반사율 = |B|²로 간단히
+                            ※ 계산 시 <strong style="color: #38bdf8;">A = 1</strong>로 정규화하여, 투과율 = |F|², 반사율 = |B|²로 간단히
                             계산됩니다.
                         </div>
                     </div>
@@ -709,14 +709,14 @@
                 B: solution[0],
                 C: solution[1],
                 D: solution[2],
-                T: solution[3],
+                F: solution[3],
                 k: k,
                 kappa: kappa
             };
         }
 
         function getPsi(x, coeffs, L) {
-            const { A, B, C, D, T, k, kappa } = coeffs;
+            const { A, B, C, D, F, k, kappa } = coeffs;
 
             if (x < 0) {
                 const term1 = math.multiply(A, math.exp(math.multiply(math.complex(0, 1), math.multiply(k, x))));
@@ -727,7 +727,7 @@
                 const term2 = math.multiply(D, math.exp(math.multiply(kappa, -x)));
                 return math.add(term1, term2);
             } else {
-                return math.multiply(T, math.exp(math.multiply(math.complex(0, 1), math.multiply(k, x))));
+                return math.multiply(F, math.exp(math.multiply(math.complex(0, 1), math.multiply(k, x))));
             }
         }
 
@@ -736,14 +736,14 @@
         function updateFormulas(coeffs) {
             if (!coeffs || !window.mathJaxReady) return;
 
-            const { A, B, C, D, T, k, kappa } = coeffs;
+            const { A, B, C, D, F, k, kappa } = coeffs;
 
             // Format coefficients for LaTeX
             const Astr = formatComplexLatex(A);
             const Bstr = formatComplexLatex(B);
             const Cstr = formatComplexLatex(C);
             const Dstr = formatComplexLatex(D);
-            const Tstr = formatComplexLatex(T);
+            const Fstr = formatComplexLatex(F);
 
             // k and kappa values
             const kVal = typeof k === 'number' ? k.toFixed(3) : k.re.toFixed(3);
@@ -759,7 +759,7 @@
                 `$$\\psi_2(x) = ${Cstr}\\, e^{\\sqrt{V_0-E}\\,x} + ${Dstr}\\, e^{-\\sqrt{V_0-E}\\,x}$$`;
 
             document.getElementById('psi3-formula').innerHTML =
-                `$$\\psi_3(x) = ${Tstr}\\, e^{i\\sqrt{E}\\,x}$$`;
+                `$$\\psi_3(x) = ${Fstr}\\, e^{i\\sqrt{E}\\,x}$$`;
 
             // ============ Real Parts Re[ψ] ============
             // For A = Ar + iAi, B = Br + iBi:
@@ -771,8 +771,8 @@
             const Ci = C.im !== undefined ? C.im : 0;
             const Dr = D.re !== undefined ? D.re : 0;
             const Di = D.im !== undefined ? D.im : 0;
-            const Tr = T.re !== undefined ? T.re : 0;
-            const Ti = T.im !== undefined ? T.im : 0;
+            const Fr = F.re !== undefined ? F.re : 0;
+            const Fi = F.im !== undefined ? F.im : 0;
 
             const cosCoeff1 = (Ar + Br).toFixed(3);
             const sinCoeff1 = (Ai - Bi).toFixed(3);
@@ -796,14 +796,14 @@
             }
 
             document.getElementById('re-psi3-formula').innerHTML =
-                `$$\\text{Re}[\\psi_3] = ${Tr.toFixed(3)}\\cos(\\sqrt{E}\\,x) - ${Ti.toFixed(3)}\\sin(\\sqrt{E}\\,x)$$`;
+                `$$\\text{Re}[\\psi_3] = ${Fr.toFixed(3)}\\cos(\\sqrt{E}\\,x) - ${Fi.toFixed(3)}\\sin(\\sqrt{E}\\,x)$$`;
 
             // ============ Probability Density |ψ|² ============
             const absA2 = math.abs(A) ** 2;
             const absB2 = math.abs(B) ** 2;
             const absC2 = math.abs(C) ** 2;
             const absD2 = math.abs(D) ** 2;
-            const absT2 = math.abs(T) ** 2;
+            const absF2 = math.abs(F) ** 2;
 
             // |ψ1|² = |A|² + |B|² + 2Re[A*B*e^{-2ikx}]
             // A*B* = (Ar + iAi)(Br - iBi) = (ArBr + AiBi) + i(AiBr - ArBi)
@@ -827,7 +827,7 @@
             }
 
             document.getElementById('prob-psi3-formula').innerHTML =
-                `$$|\\psi_3|^2 = ${absT2.toFixed(3)}$$`;
+                `$$|\\psi_3|^2 = ${absF2.toFixed(3)}$$`;
 
             // Re-render MathJax
             if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
@@ -943,10 +943,10 @@
             ctx.fillText(`x=${L.toFixed(1)}`, mapX(L) + 5, height - 10);
 
             // Update Stats
-            const T_prob = math.abs(coeffs.T) ** 2;
+            const F_prob = math.abs(coeffs.F) ** 2;
             const R_prob = math.abs(coeffs.B) ** 2;
 
-            document.getElementById('statT').textContent = (T_prob * 100).toFixed(2) + "%";
+            document.getElementById('statT').textContent = (F_prob * 100).toFixed(2) + "%";
             document.getElementById('statR').textContent = (R_prob * 100).toFixed(2) + "%";
         }
 
